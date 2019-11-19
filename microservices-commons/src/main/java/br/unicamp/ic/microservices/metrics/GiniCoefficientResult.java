@@ -1,7 +1,7 @@
 /**
  * 
  */
-package br.unicamp.ic.ginicoefficient.controller;
+package br.unicamp.ic.microservices.metrics;
 
 import java.math.BigDecimal;
 
@@ -12,7 +12,7 @@ import javax.persistence.Entity;
  *
  */
 @Entity
-public class GiniCoefficient {
+public class GiniCoefficientResult {
 
 	private BigDecimal giniIndex;
 	

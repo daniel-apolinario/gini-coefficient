@@ -29,9 +29,9 @@ public class GiniCoefficientController {
 	@RequestMapping(value = "/calculate-gini-index/{dataSeries}", method = RequestMethod.GET)
 	@ResponseBody
 	// @GetMapping("/gini-coefficient/")
-	public GiniCoefficient calculateGiniCoefficient(@PathVariable List<BigDecimal> dataSeries) {
+	public GiniCoefficientResult calculateGiniCoefficient(@PathVariable List<BigDecimal> dataSeries) {
 
-		GiniCoefficient giniCoefficient = new GiniCoefficient();
+		GiniCoefficientResult giniCoefficient = new GiniCoefficientResult();
 		// set the port number of the server responding the request
 		giniCoefficient.setPort(Integer.parseInt(environment.getProperty("local.server.port")));
 
@@ -50,7 +50,11 @@ public class GiniCoefficientController {
 	private BigDecimal calculateGiniIndex(List<BigDecimal> dataSeries) {
 		BigDecimal firstSum = calculateFirstSum(dataSeries);
 		BigDecimal secondSum = calculateSecondSum(dataSeries);
-		return firstSum.divide(secondSum, MathContext.DECIMAL32);
+		BigDecimal giniIndexResult = new BigDecimal(0);
+		if (firstSum.doubleValue() > 0 & secondSum.doubleValue() > 0) {
+			giniIndexResult = firstSum.divide(secondSum, MathContext.DECIMAL32);
+		}
+		return giniIndexResult;
 	}
 
 	/**
