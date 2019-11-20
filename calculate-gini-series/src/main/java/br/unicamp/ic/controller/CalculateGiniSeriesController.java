@@ -95,29 +95,53 @@ public class CalculateGiniSeriesController {
 			Object[] adsMetricValues = getMetricValues(microservice, MetricType.ADS);
 			int i = 0;
 			for (Object value : adsMetricValues) {
-				if ((Double) value > 0) {
-					List metricValuesList = adsSeriesData.get(i);
-					metricValuesList.add(value);
-				}
+				List metricValuesList = adsSeriesData.get(i);
+				metricValuesList.add(value);
 				i += 1;
 			}
 			Object[] aisMetricValues = getMetricValues(microservice, MetricType.AIS);
 			int j = 0;
-			for (Object value : adsMetricValues) {
-				if ((Double) value > 0) {
-					List metricValuesList = aisSeriesData.get(j);
-					metricValuesList.add(value);
-				}
+			for (Object value : aisMetricValues) {
+				List metricValuesList = aisSeriesData.get(j);
+				metricValuesList.add(value);
 				j += 1;
 			}
 
 		}
 
+		// identify invalid values when microservices were not created yet and
+		// their metric values are zero.
+		removeInvalidMetricValues(adsSeriesData, aisSeriesData);
+
 		GiniSeries adsGiniSeries = calculateGiniIndexBetweenMicroservices(adsSeriesData, MetricType.ADS);
-		GiniSeries aisGiniSeries = calculateGiniIndexBetweenMicroservices(adsSeriesData, MetricType.AIS);
+		GiniSeries aisGiniSeries = calculateGiniIndexBetweenMicroservices(aisSeriesData, MetricType.AIS);
 
 		msApp.addGiniSeries(adsGiniSeries);
 		msApp.addGiniSeries(aisGiniSeries);
+	}
+
+	/**
+	 * @param adsSeriesData
+	 * @param aisSeriesData
+	 */
+	private void removeInvalidMetricValues(List<List> adsSeriesData, List<List> aisSeriesData) {
+		int releasesListSize = adsSeriesData.size();
+		for (int i = 0; i < releasesListSize; i++) {
+			List adsValuesList = adsSeriesData.get(i);
+			List aisValuesList = aisSeriesData.get(i);
+			int numberOfMicroservices = adsValuesList.size();
+			List<Integer> indexesToRemove = new ArrayList<Integer>();
+			for (int j = numberOfMicroservices - 1; j >= 0; j--) {
+				if ((Double) adsValuesList.get(j) == 0 && (Double) aisValuesList.get(j) == 0) {
+					indexesToRemove.add(j);
+				}
+			}
+			for (Integer index : indexesToRemove) {
+				adsSeriesData.get(i).remove(index.intValue());
+				aisSeriesData.get(i).remove(index.intValue());
+			}
+		}
+
 	}
 
 	/**
@@ -160,11 +184,9 @@ public class CalculateGiniSeriesController {
 	 * @param microservices
 	 */
 	private void calculateGiniForMicroservices(List<Microservice> microservices) {
-
 		for (Microservice microservice : microservices) {
 			calculateGiniValues(microservice);
 		}
-
 	}
 
 	/**
@@ -175,6 +197,16 @@ public class CalculateGiniSeriesController {
 	private void calculateGiniValues(Microservice microservice) {
 
 		Object[] adsMetricValues = getMetricValues(microservice, MetricType.ADS);
+		Object[] aisMetricValues = getMetricValues(microservice, MetricType.AIS);
+
+		// get the index that represents the release of creation for the microservice.
+		// some microservices are included during the evolution and the 0s values
+		// in the initial releases need to be removed to not impact the gini index
+		// calculated
+		int startIndex = getStartIndex(adsMetricValues, aisMetricValues);
+		int originalSize = adsMetricValues.length;
+		adsMetricValues = Arrays.copyOfRange(adsMetricValues, startIndex, originalSize);
+		aisMetricValues = Arrays.copyOfRange(aisMetricValues, startIndex, originalSize);
 
 		String values = Arrays.toString(adsMetricValues).replaceAll("\\[|\\]|", "");
 		GiniCoefficientResult giniResult = restTemplate.getForObject(this.calculateGiniIndexURL + values,
@@ -187,8 +219,6 @@ public class CalculateGiniSeriesController {
 		giniSeries.setSeriesData(giniHash);
 		microservice.addGiniSeries(giniSeries);
 
-		Object[] aisMetricValues = getMetricValues(microservice, MetricType.AIS);
-
 		String aisValues = Arrays.toString(aisMetricValues).replaceAll("\\[|\\]|", "");
 		GiniCoefficientResult aisGiniResult = restTemplate.getForObject(this.calculateGiniIndexURL + aisValues,
 				GiniCoefficientResult.class);
@@ -200,6 +230,24 @@ public class CalculateGiniSeriesController {
 		aisGiniSeries.setSeriesData(aisGiniHash);
 		microservice.addGiniSeries(aisGiniSeries);
 
+	}
+
+	/**
+	 * @param adsMetricValues
+	 * @param aisMetricValues
+	 * @return
+	 */
+	private int getStartIndex(Object[] adsMetricValues, Object[] aisMetricValues) {
+		int startIndex = 0;
+		for (int i = 0; i < adsMetricValues.length; i++) {
+			// condition represents that microservice not exists yet
+			if ((Double) adsMetricValues[i] == 0 && (Double) aisMetricValues[i] == 0) {
+				startIndex += 1;
+			} else {
+				break;
+			}
+		}
+		return startIndex;
 	}
 
 	private Object[] getMetricValues(Microservice microservice, MetricType metricType) {
