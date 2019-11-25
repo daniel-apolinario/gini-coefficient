@@ -3,7 +3,10 @@
  */
 package br.unicamp.ic.controller;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -64,8 +67,32 @@ public class CalculateGiniSeriesController {
 
 		msaList = calculateGiniSeriesData();
 
-		// exportTestResultsToJson(app.getName(), testResultList);
+		exportTestResultsToJson(msaList);
+		
 		return msaList;
+	}
+
+	/**
+	 * @param msaList
+	 */
+	private void exportTestResultsToJson(List<MicroservicesApplication> msaList) {
+		for (MicroservicesApplication app : msaList) {
+		
+			try (FileOutputStream fos = new FileOutputStream(searchFolder + app.getName() + "/metrics-with-gini.json");
+					OutputStreamWriter isr = new OutputStreamWriter(fos, StandardCharsets.UTF_8)) {
+				Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
+
+				gson.toJson(app, isr);
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+		
 	}
 
 	private List<MicroservicesApplication> calculateGiniSeriesData() {

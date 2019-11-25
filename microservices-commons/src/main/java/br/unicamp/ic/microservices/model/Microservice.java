@@ -3,6 +3,7 @@
  */
 package br.unicamp.ic.microservices.model;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import com.google.gson.annotations.Expose;
 
 import br.unicamp.ic.microservices.metrics.GiniSeries;
 import br.unicamp.ic.microservices.metrics.Metric;
+import br.unicamp.ic.microservices.metrics.Metric.MetricType;
 
 /**
  * @author Daniel R. F. Apolinario
@@ -26,7 +28,7 @@ public class Microservice {
 	private List<Metric> metrics;
 
 	@Expose
-	private List<GiniSeries> giniSeries;
+	private List<GiniSeries<MetricType, Integer, BigDecimal>> giniSeries;
 
 	public String getName() {
 		return name;
@@ -71,17 +73,17 @@ public class Microservice {
 		this.metrics.add(metric);
 	}
 
-	public List<GiniSeries> getGiniSeries() {
+	public List<GiniSeries<MetricType, Integer, BigDecimal>> getGiniSeries() {
 		return giniSeries;
 	}
 
-	public void setGiniSeries(List<GiniSeries> giniSeries) {
+	public void setGiniSeries(List<GiniSeries<MetricType, Integer, BigDecimal>> giniSeries) {
 		this.giniSeries = giniSeries;
 	}
 
-	public void addGiniSeries(GiniSeries giniSeriesElement) {
+	public void addGiniSeries(GiniSeries<MetricType, Integer, BigDecimal> giniSeriesElement) {
 		if (this.giniSeries == null) {
-			this.giniSeries = new ArrayList<GiniSeries>();
+			this.giniSeries = new ArrayList<GiniSeries<MetricType, Integer, BigDecimal>>();
 		}
 		this.giniSeries.add(giniSeriesElement);
 	}

@@ -40,10 +40,13 @@ public class MicroservicesGraph<V, E> extends SimpleDirectedGraph<V, E> {
 	
 	private String pathName;
 	
+	@Expose
 	private InitialArchitectureState initialArchitectureState;
 
+	@Expose
 	private ArchitectureEvolutionTarget architectureEvolutionTarget;
 
+	@Expose
 	private ArchitectureEvolutionIssue architectureEvolutionIssue;
 
 	private double architectureEvolutionGrowthRate;
