@@ -68,7 +68,7 @@ public class CalculateGiniSeriesController {
 		msaList = calculateGiniSeriesData();
 
 		exportTestResultsToJson(msaList);
-		
+
 		return msaList;
 	}
 
@@ -77,7 +77,7 @@ public class CalculateGiniSeriesController {
 	 */
 	private void exportTestResultsToJson(List<MicroservicesApplication> msaList) {
 		for (MicroservicesApplication app : msaList) {
-		
+
 			try (FileOutputStream fos = new FileOutputStream(searchFolder + app.getName() + "/metrics-with-gini.json");
 					OutputStreamWriter isr = new OutputStreamWriter(fos, StandardCharsets.UTF_8)) {
 				Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
@@ -92,7 +92,7 @@ public class CalculateGiniSeriesController {
 			}
 
 		}
-		
+
 	}
 
 	private List<MicroservicesApplication> calculateGiniSeriesData() {
@@ -232,28 +232,39 @@ public class CalculateGiniSeriesController {
 		// calculated
 		int startIndex = getStartIndex(adsMetricValues, aisMetricValues);
 		int originalSize = adsMetricValues.length;
-		adsMetricValues = Arrays.copyOfRange(adsMetricValues, startIndex, originalSize);
-		aisMetricValues = Arrays.copyOfRange(aisMetricValues, startIndex, originalSize);
+		//adsMetricValues = Arrays.copyOfRange(adsMetricValues, startIndex, originalSize);
+		//aisMetricValues = Arrays.copyOfRange(aisMetricValues, startIndex, originalSize);
 
-		String values = Arrays.toString(adsMetricValues).replaceAll("\\[|\\]|", "");
-		GiniCoefficientResult giniResult = restTemplate.getForObject(this.calculateGiniIndexURL + values,
-				GiniCoefficientResult.class);
-
-		GiniSeries<MetricType, Integer, BigDecimal> giniSeries = new GiniSeries<MetricType, Integer, BigDecimal>();
-		giniSeries.setMetricType(MetricType.ADS);
-		HashMap<Integer, BigDecimal> giniHash = new HashMap<Integer, BigDecimal>();
-		giniHash.put(0, giniResult.getGiniIndex());
-		giniSeries.setSeriesData(giniHash);
-		microservice.addGiniSeries(giniSeries);
-
-		String aisValues = Arrays.toString(aisMetricValues).replaceAll("\\[|\\]|", "");
-		GiniCoefficientResult aisGiniResult = restTemplate.getForObject(this.calculateGiniIndexURL + aisValues,
-				GiniCoefficientResult.class);
+		GiniSeries<MetricType, Integer, BigDecimal> adsGiniSeries = new GiniSeries<MetricType, Integer, BigDecimal>();
+		adsGiniSeries.setMetricType(MetricType.ADS);
+		HashMap<Integer, BigDecimal> adsGiniHash = new HashMap<Integer, BigDecimal>();
 
 		GiniSeries<MetricType, Integer, BigDecimal> aisGiniSeries = new GiniSeries<MetricType, Integer, BigDecimal>();
 		aisGiniSeries.setMetricType(MetricType.AIS);
 		HashMap<Integer, BigDecimal> aisGiniHash = new HashMap<Integer, BigDecimal>();
-		aisGiniHash.put(0, aisGiniResult.getGiniIndex());
+
+		for (int i = 0; i < originalSize; i++) {
+			if (i >= startIndex) {
+				Object[] adsMetricValuesRange = Arrays.copyOfRange(adsMetricValues, startIndex, i + 1);
+				String adsValuesRange = Arrays.toString(adsMetricValuesRange).replaceAll("\\[|\\]|", "");
+				GiniCoefficientResult adsGiniResult = restTemplate
+						.getForObject(this.calculateGiniIndexURL + adsValuesRange, GiniCoefficientResult.class);
+				adsGiniHash.put(i, adsGiniResult.getGiniIndex());
+
+				Object[] aisMetricValuesRange = Arrays.copyOfRange(aisMetricValues, startIndex, i + 1);
+				String aisValuesRange = Arrays.toString(aisMetricValuesRange).replaceAll("\\[|\\]|", "");
+				GiniCoefficientResult aisGiniResult = restTemplate
+						.getForObject(this.calculateGiniIndexURL + aisValuesRange, GiniCoefficientResult.class);
+				aisGiniHash.put(i, aisGiniResult.getGiniIndex());
+			} else {
+				adsGiniHash.put(i, null);
+				aisGiniHash.put(i, null);
+			}
+
+		}
+		adsGiniSeries.setSeriesData(adsGiniHash);
+		microservice.addGiniSeries(adsGiniSeries);
+
 		aisGiniSeries.setSeriesData(aisGiniHash);
 		microservice.addGiniSeries(aisGiniSeries);
 

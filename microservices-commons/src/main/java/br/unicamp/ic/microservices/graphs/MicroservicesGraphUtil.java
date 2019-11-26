@@ -162,7 +162,9 @@ public class MicroservicesGraphUtil {
 
 			@Override
 			public String get() {
-				return prefix + id++;
+				int returnedId = id++;
+				System.out.println(prefix + returnedId);
+				return "MSV" + returnedId;
 			}
 		};
 		return vSupplier;
