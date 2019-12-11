@@ -112,12 +112,19 @@ public class CalculateGiniSeriesController {
 		int sizeOfSeries = getSizeOfSeries(msApp);
 		List<List> adsSeriesData = new ArrayList<>();
 		List<List> aisSeriesData = new ArrayList<>();
+		List<List> siySeriesData = new ArrayList<>();
 		for (int i = 0; i < sizeOfSeries; i++) {
 			List<Object> adsMetricValues = new ArrayList<Object>();
 			adsSeriesData.add(adsMetricValues);
 			List<Object> aisMetricValues = new ArrayList<Object>();
 			aisSeriesData.add(aisMetricValues);
 		}
+		int sizeOfReleases = msApp.getMicroservices().get(0).getMetrics().get(0).getReleases().length;
+		for (int i = 0; i < sizeOfReleases; i++) {
+			List<Object> siyMetricValues = new ArrayList<Object>();
+			siySeriesData.add(siyMetricValues);
+		}
+
 		for (Microservice microservice : msApp.getMicroservices()) {
 			Object[] adsMetricValues = getMetricValues(microservice, MetricType.ADS);
 			int i = 0;
@@ -136,15 +143,25 @@ public class CalculateGiniSeriesController {
 
 		}
 
+		Object[] siyMetricValues = getMetricValues(msApp, MetricType.SIY);
+		int i = 0;
+		for (Object value : siyMetricValues) {
+			List metricValuesList = siySeriesData.get(i);
+			metricValuesList.add(value);
+			i += 1;
+		}
+
 		// identify invalid values when microservices were not created yet and
 		// their metric values are zero.
 		removeInvalidMetricValues(adsSeriesData, aisSeriesData);
 
 		GiniSeries adsGiniSeries = calculateGiniIndexBetweenMicroservices(adsSeriesData, MetricType.ADS);
 		GiniSeries aisGiniSeries = calculateGiniIndexBetweenMicroservices(aisSeriesData, MetricType.AIS);
+		GiniSeries siyGiniSeries = calculateGiniIndexBetweenMicroservices(siySeriesData, MetricType.SIY);
 
 		msApp.addGiniSeries(adsGiniSeries);
 		msApp.addGiniSeries(aisGiniSeries);
+		msApp.addGiniSeries(siyGiniSeries);
 	}
 
 	/**
@@ -174,7 +191,7 @@ public class CalculateGiniSeriesController {
 	/**
 	 * @param adsSeriesData
 	 */
-	private GiniSeries<MetricType, Integer, BigDecimal> calculateGiniIndexBetweenMicroservices(List<List> adsSeriesData,
+	private GiniSeries<MetricType, Integer, BigDecimal> calculateGiniIndexBetweenMicroservices(List<List> seriesData,
 			MetricType metricType) {
 		GiniSeries<MetricType, Integer, BigDecimal> giniSeries = new GiniSeries<MetricType, Integer, BigDecimal>();
 		giniSeries.setMetricType(metricType);
@@ -182,7 +199,7 @@ public class CalculateGiniSeriesController {
 		giniSeries.setSeriesData(giniHash);
 
 		int i = 0;
-		for (List list : adsSeriesData) {
+		for (List list : seriesData) {
 			String valuesCommaSeparated = Arrays.toString(list.toArray()).replaceAll("\\[|\\]|", "");
 			GiniCoefficientResult giniResult = restTemplate
 					.getForObject(this.calculateGiniIndexURL + valuesCommaSeparated, GiniCoefficientResult.class);
@@ -232,8 +249,10 @@ public class CalculateGiniSeriesController {
 		// calculated
 		int startIndex = getStartIndex(adsMetricValues, aisMetricValues);
 		int originalSize = adsMetricValues.length;
-		//adsMetricValues = Arrays.copyOfRange(adsMetricValues, startIndex, originalSize);
-		//aisMetricValues = Arrays.copyOfRange(aisMetricValues, startIndex, originalSize);
+		// adsMetricValues = Arrays.copyOfRange(adsMetricValues, startIndex,
+		// originalSize);
+		// aisMetricValues = Arrays.copyOfRange(aisMetricValues, startIndex,
+		// originalSize);
 
 		GiniSeries<MetricType, Integer, BigDecimal> adsGiniSeries = new GiniSeries<MetricType, Integer, BigDecimal>();
 		adsGiniSeries.setMetricType(MetricType.ADS);
@@ -292,6 +311,16 @@ public class CalculateGiniSeriesController {
 		Object[] metricValues = null;
 		Optional<Metric> metric = microservice.getMetrics().stream().filter(m -> m.getType().equals(metricType))
 				.findFirst();
+		if (metric.isPresent()) {
+			metricValues = (Object[]) metric.get().getValues();
+		}
+		return metricValues;
+	}
+
+	private Object[] getMetricValues(MicroservicesApplication microservicesApplication, MetricType metricType) {
+		Object[] metricValues = null;
+		Optional<Metric> metric = microservicesApplication.getMetrics().stream()
+				.filter(m -> m.getType().equals(metricType)).findFirst();
 		if (metric.isPresent()) {
 			metricValues = (Object[]) metric.get().getValues();
 		}
