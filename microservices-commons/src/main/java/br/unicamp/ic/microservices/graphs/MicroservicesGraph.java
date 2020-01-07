@@ -41,6 +41,9 @@ public class MicroservicesGraph<V, E> extends SimpleDirectedGraph<V, E> {
 	private String pathName;
 	
 	@Expose
+	private String applicationName;
+	
+	@Expose
 	private InitialArchitectureState initialArchitectureState;
 
 	@Expose
@@ -101,6 +104,14 @@ public class MicroservicesGraph<V, E> extends SimpleDirectedGraph<V, E> {
 	 */
 	public void setPathName(String pathName) {
 		this.pathName = pathName;
+	}
+
+	public String getApplicationName() {
+		return applicationName;
+	}
+
+	public void setApplicationName(String applicationName) {
+		this.applicationName = applicationName;
 	}
 
 	public InitialArchitectureState getInitialArchitectureState() {

@@ -76,13 +76,18 @@ public class MicroservicesGraphUtil {
 	public static List<String> getRandomVertices(Graph<String, DefaultEdge> graph, int quantity,
 			VertexTypeRestrictions vertexTypeRestrictions) {
 		List<String> vertices = new ArrayList<String>();
+
+		// To limit quantity to the maximum possible nodes, considering the restrictions
+		// to we are not creating a infinite loop below (while)
+		int maxQuantity = calculateMaxQuantityRandomVertices(graph, quantity, vertexTypeRestrictions);
 		Random rd = new Random();
 		int graphSize = 0;
-		if (graph != null && graph.vertexSet().size() > 0 && quantity > 0 && quantity <= graph.vertexSet().size()) {
+		if (graph != null && graph.vertexSet().size() > 0 && maxQuantity > 0
+				&& maxQuantity <= graph.vertexSet().size()) {
 			graphSize = graph.vertexSet().size();
 			List<String> allVertices = Graphs.getVertexToIntegerMapping(graph).getIndexList();
 			int i = 0;
-			while (i < quantity) {
+			while (i < maxQuantity) {
 				int vertexIndex = rd.nextInt(graphSize - i);
 				if (vertexTypeRestrictions.testVertexTypeRestrictions(allVertices.get(vertexIndex))) {
 					vertices.add(allVertices.get(vertexIndex));
@@ -92,6 +97,26 @@ public class MicroservicesGraphUtil {
 			}
 		}
 		return vertices;
+	}
+
+	/**
+	 * @param graph
+	 * @param quantity
+	 * @param vertexTypeRestrictions
+	 * @return
+	 */
+	private static int calculateMaxQuantityRandomVertices(Graph<String, DefaultEdge> graph, int quantity,
+			VertexTypeRestrictions vertexTypeRestrictions) {
+		int maxQuantity = 0;
+		for (String vertexName : graph.vertexSet()) {
+			if (vertexTypeRestrictions.testVertexTypeRestrictions(vertexName)) {
+				maxQuantity += 1;
+			}
+		}
+		if (maxQuantity > quantity) {
+			maxQuantity = quantity;
+		}
+		return maxQuantity;
 	}
 
 	/**
@@ -190,7 +215,7 @@ public class MicroservicesGraphUtil {
 
 	private static List<Path> find(String searchDirectory, PathMatcher matcher) throws IOException {
 		try (Stream<Path> files = Files.walk(Paths.get(searchDirectory))) {
-			return (List<Path>)files.filter(matcher::matches).collect(Collectors.toList());
+			return (List<Path>) files.filter(matcher::matches).collect(Collectors.toList());
 
 		}
 	}
@@ -205,14 +230,15 @@ public class MicroservicesGraphUtil {
 		StringBuffer fileName = new StringBuffer();
 		fileName.append(appName).append(NAME_SEPARATOR).append(String.format("%02d", appNumber));
 		if (releaseNumber > 0) {
-			fileName.append(NAME_SEPARATOR).append(RELEASE_IDENTIFICATOR).append(NAME_SEPARATOR).append(String.format("%02d", releaseNumber));
+			fileName.append(NAME_SEPARATOR).append(RELEASE_IDENTIFICATOR).append(NAME_SEPARATOR)
+					.append(String.format("%02d", releaseNumber));
 		}
 		if (suffix != null) {
 			fileName.append(NAME_SEPARATOR).append(suffix);
 		}
 		return fileName.toString();
 	}
-	
+
 	/**
 	 * @param graphFilesDOT
 	 * @return
@@ -236,6 +262,7 @@ public class MicroservicesGraphUtil {
 					MicroservicesGraph<String, DefaultEdge> mg = (MicroservicesGraph<String, DefaultEdge>) graph;
 					mg.setFileName(path.toString());
 					mg.setPathName(path.getParent().toString());
+					mg.setApplicationName(path.getParent().getFileName().toString());
 					microservicesGraphList.add(mg);
 				} catch (IOException e1) {
 					// TODO Auto-generated catch block
