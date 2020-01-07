@@ -145,10 +145,12 @@ public class CalculateGiniSeriesController {
 
 		Object[] siyMetricValues = getMetricValues(msApp, MetricType.SIY);
 		int i = 0;
-		for (Object value : siyMetricValues) {
-			List metricValuesList = siySeriesData.get(i);
-			metricValuesList.add(value);
-			i += 1;
+		if (siyMetricValues != null && siyMetricValues.length > 0) {
+			for (Object value : siyMetricValues) {
+				List metricValuesList = siySeriesData.get(i);
+				metricValuesList.add(value);
+				i += 1;
+			}
 		}
 
 		// identify invalid values when microservices were not created yet and
@@ -157,11 +159,14 @@ public class CalculateGiniSeriesController {
 
 		GiniSeries adsGiniSeries = calculateGiniIndexBetweenMicroservices(adsSeriesData, MetricType.ADS);
 		GiniSeries aisGiniSeries = calculateGiniIndexBetweenMicroservices(aisSeriesData, MetricType.AIS);
-		GiniSeries siyGiniSeries = calculateGiniIndexBetweenMicroservices(siySeriesData, MetricType.SIY);
 
 		msApp.addGiniSeries(adsGiniSeries);
 		msApp.addGiniSeries(aisGiniSeries);
-		msApp.addGiniSeries(siyGiniSeries);
+
+		if (siyMetricValues != null && siyMetricValues.length > 0) {
+			GiniSeries siyGiniSeries = calculateGiniIndexBetweenMicroservices(siySeriesData, MetricType.SIY);
+			msApp.addGiniSeries(siyGiniSeries);
+		}
 	}
 
 	/**
