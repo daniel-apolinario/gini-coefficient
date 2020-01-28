@@ -30,6 +30,12 @@ public class ExperimentDesignConfig {
 	private List<ExperimentDesignConfig.GraphSize> graphSizeFactor;
 
 	private List<ExperimentDesignConfig.GraphScenario> graphScenarioFactor;
+	
+	private int releasesNumber;
+	
+	private int architectureEvolutionGrowthRateMininum;
+
+	private int architectureEvolutionGrowthRateMaximum;	
 
 	public int getReplicasQuantity() {
 		return replicasQuantity;
@@ -61,6 +67,30 @@ public class ExperimentDesignConfig {
 
 	public void setGraphScenarioFactor(List graphScenarioFactor) {
 		this.graphScenarioFactor = graphScenarioFactor;
+	}
+
+	public int getReleasesNumber() {
+		return releasesNumber;
+	}
+
+	public void setReleasesNumber(int releasesNumber) {
+		this.releasesNumber = releasesNumber;
+	}
+
+	public int getArchitectureEvolutionGrowthRateMininum() {
+		return architectureEvolutionGrowthRateMininum;
+	}
+
+	public void setArchitectureEvolutionGrowthRateMininum(int architectureEvolutionGrowthRateMininum) {
+		this.architectureEvolutionGrowthRateMininum = architectureEvolutionGrowthRateMininum;
+	}
+
+	public int getArchitectureEvolutionGrowthRateMaximum() {
+		return architectureEvolutionGrowthRateMaximum;
+	}
+
+	public void setArchitectureEvolutionGrowthRateMaximum(int architectureEvolutionGrowthRateMaximum) {
+		this.architectureEvolutionGrowthRateMaximum = architectureEvolutionGrowthRateMaximum;
 	}
 
 

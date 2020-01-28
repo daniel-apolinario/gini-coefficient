@@ -222,7 +222,7 @@ public class MicroservicesGraphUtil {
 
 	public static String getExportCompletePath(String pathName, String appName, int appNumber) {
 		StringBuffer completePath = new StringBuffer();
-		completePath.append(pathName).append(appName).append(NAME_SEPARATOR).append(appNumber);
+		completePath.append(pathName).append(appName).append(NAME_SEPARATOR).append(String.format("%03d", appNumber));
 		return completePath.toString();
 	}
 
