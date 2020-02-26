@@ -166,12 +166,20 @@ public class MicroservicesGraphUtil {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
+
 			try {
 				exporter.exportGraph(graph, writer);
 			} catch (org.jgrapht.io.ExportException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			
+			try {
+				writer.close();
+			} catch (IOException e) {
+				// TODO: handle exception
+			}
+
 		}
 	}
 
@@ -222,7 +230,7 @@ public class MicroservicesGraphUtil {
 
 	public static String getExportCompletePath(String pathName, String appName, int appNumber) {
 		StringBuffer completePath = new StringBuffer();
-		completePath.append(pathName).append(appName).append(NAME_SEPARATOR).append(String.format("%03d", appNumber));
+		completePath.append(pathName).append(appName).append(NAME_SEPARATOR).append(String.format("%04d", appNumber));
 		return completePath.toString();
 	}
 
@@ -264,6 +272,7 @@ public class MicroservicesGraphUtil {
 					mg.setPathName(path.getParent().toString());
 					mg.setApplicationName(path.getParent().getFileName().toString());
 					microservicesGraphList.add(mg);
+					reader.close();
 				} catch (IOException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
