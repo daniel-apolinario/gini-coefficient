@@ -79,7 +79,7 @@ public class MicroservicesGraphUtil {
 
 		// To limit quantity to the maximum possible nodes, considering the restrictions
 		// to we are not creating a infinite loop below (while)
-		int maxQuantity = calculateMaxQuantityRandomVertices(graph, quantity, vertexTypeRestrictions);
+		int maxQuantity = calculateMaxQuantityOfVertices(graph, quantity, vertexTypeRestrictions);
 		Random rd = new Random();
 		int graphSize = 0;
 		if (graph != null && graph.vertexSet().size() > 0 && maxQuantity > 0
@@ -105,7 +105,7 @@ public class MicroservicesGraphUtil {
 	 * @param vertexTypeRestrictions
 	 * @return
 	 */
-	private static int calculateMaxQuantityRandomVertices(Graph<String, DefaultEdge> graph, int quantity,
+	public static int calculateMaxQuantityOfVertices(Graph<String, DefaultEdge> graph, int quantity,
 			VertexTypeRestrictions vertexTypeRestrictions) {
 		int maxQuantity = 0;
 		for (String vertexName : graph.vertexSet()) {

@@ -32,7 +32,7 @@ public class MicroservicesGraph<V, E> extends SimpleDirectedGraph<V, E> {
 	}
 
 	public enum ArchitectureEvolutionIssue {
-		MEGA_SERVICE, CYCLIC_DEPENDENCY;
+		CONCENTRATE_INCOMING_EDGES, CONCENTRATE_OUTGOING_EDGES, CYCLIC_DEPENDENCY;
 	}
 
 	@Expose

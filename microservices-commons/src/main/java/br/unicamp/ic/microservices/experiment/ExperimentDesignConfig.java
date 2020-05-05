@@ -36,6 +36,11 @@ public class ExperimentDesignConfig {
 	private int architectureEvolutionGrowthRateMininum;
 
 	private int architectureEvolutionGrowthRateMaximum;	
+	
+	private int evolutionMininumDependencies;
+	
+	private int evolutionMaximumDependencies;
+
 
 	public int getReplicasQuantity() {
 		return replicasQuantity;
@@ -91,6 +96,22 @@ public class ExperimentDesignConfig {
 
 	public void setArchitectureEvolutionGrowthRateMaximum(int architectureEvolutionGrowthRateMaximum) {
 		this.architectureEvolutionGrowthRateMaximum = architectureEvolutionGrowthRateMaximum;
+	}
+
+	public int getEvolutionMininumDependencies() {
+		return evolutionMininumDependencies;
+	}
+
+	public void setEvolutionMininumDependencies(int evolutionMininumDependencies) {
+		this.evolutionMininumDependencies = evolutionMininumDependencies;
+	}
+
+	public int getEvolutionMaximumDependencies() {
+		return evolutionMaximumDependencies;
+	}
+
+	public void setEvolutionMaximumDependencies(int evolutionMaximumDependencies) {
+		this.evolutionMaximumDependencies = evolutionMaximumDependencies;
 	}
 
 
