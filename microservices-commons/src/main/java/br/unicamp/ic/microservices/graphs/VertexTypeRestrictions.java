@@ -5,12 +5,13 @@ package br.unicamp.ic.microservices.graphs;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * @author Daniel R. F. Apolinario
  *
  */
-public class VertexTypeRestrictions {
+public class VertexTypeRestrictions implements Predicate<String> {
 
 	private boolean apiGatewayRestrict = false;
 
@@ -160,6 +161,17 @@ public class VertexTypeRestrictions {
 			}
 		}
 		return true;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.util.function.Predicate#test(java.lang.Object)
+	 */
+	@Override
+	public boolean test(String vertexName) {
+
+		return !testVertexTypeRestrictions(vertexName);
 	}
 
 }
