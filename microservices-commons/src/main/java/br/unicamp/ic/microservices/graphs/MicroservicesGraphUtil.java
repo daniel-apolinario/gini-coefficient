@@ -4,6 +4,7 @@
 package br.unicamp.ic.microservices.graphs;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
@@ -161,6 +162,10 @@ public class MicroservicesGraphUtil {
 					null);
 			Writer writer = null;
 			try {
+				File  file = new File(dirName);
+				if(!file.exists()) {
+					file.mkdir();
+				}
 				writer = new FileWriter(dirName + "/" + fileName + ".dot");
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block

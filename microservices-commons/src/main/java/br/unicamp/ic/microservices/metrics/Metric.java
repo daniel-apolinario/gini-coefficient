@@ -21,7 +21,7 @@ public class Metric<O, R, V> {
 	private V[] values;
 
 	public enum MetricType {
-		SIY, ADS, AIS, ACS, RCS, RIS, SCF, ADCS;
+		SIY, ADS, AIS, ACS, RCS, RIS, SCF, ADCS, ADS_FILTERED, AIS_FILTERED, ADCS_FILTERED;
 	}
 
 	/**

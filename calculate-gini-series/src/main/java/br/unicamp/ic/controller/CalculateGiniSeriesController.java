@@ -53,6 +53,8 @@ public class CalculateGiniSeriesController {
 
 	private static final String calculateGiniIndexURL = "http://localhost:8000/calculate-gini-index/";
 
+	private HashMap<String, BigDecimal> giniIndexCache = null;
+
 	@Autowired
 	private Environment environment;
 
@@ -70,7 +72,7 @@ public class CalculateGiniSeriesController {
 		msaList = calculateGiniSeriesData();
 
 		exportTestResultsToJson(msaList);
-		
+
 		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
 
@@ -114,12 +116,18 @@ public class CalculateGiniSeriesController {
 		int sizeOfSeries = getSizeOfSeries(msApp);
 		List<List> adsSeriesData = new ArrayList<>();
 		List<List> aisSeriesData = new ArrayList<>();
+		List<List> adsFilteredSeriesData = new ArrayList<>();
+		List<List> aisFilteredSeriesData = new ArrayList<>();
 		List<List> siySeriesData = new ArrayList<>();
 		for (int i = 0; i < sizeOfSeries; i++) {
 			List<Object> adsMetricValues = new ArrayList<Object>();
 			adsSeriesData.add(adsMetricValues);
 			List<Object> aisMetricValues = new ArrayList<Object>();
 			aisSeriesData.add(aisMetricValues);
+			List<Object> adsFilteredMetricValues = new ArrayList<Object>();
+			adsFilteredSeriesData.add(adsFilteredMetricValues);
+			List<Object> aisFilteredMetricValues = new ArrayList<Object>();
+			aisFilteredSeriesData.add(aisFilteredMetricValues);
 		}
 		int sizeOfReleases = msApp.getMicroservices().get(0).getMetrics().get(0).getReleases().length;
 		for (int i = 0; i < sizeOfReleases; i++) {
@@ -142,6 +150,28 @@ public class CalculateGiniSeriesController {
 				metricValuesList.add(value);
 				j += 1;
 			}
+			Object[] adsFilteredMetricValues = getMetricValues(microservice, MetricType.ADS_FILTERED);
+			if (adsFilteredMetricValues != null && adsFilteredMetricValues.length > 0) {
+				int k = 0;
+				for (Object value : adsFilteredMetricValues) {
+					List metricValuesList = adsFilteredSeriesData.get(k);
+					if (value != null) {
+						metricValuesList.add(value);
+					}
+					k += 1;
+				}
+			}
+			Object[] aisFilteredMetricValues = getMetricValues(microservice, MetricType.AIS_FILTERED);
+			if (aisFilteredMetricValues != null && aisFilteredMetricValues.length > 0) {
+				int l = 0;
+				for (Object value : aisFilteredMetricValues) {
+					List metricValuesList = aisFilteredSeriesData.get(l);
+					if (value != null) {
+						metricValuesList.add(value);
+					}
+					l += 1;
+				}
+			}
 
 		}
 
@@ -157,13 +187,19 @@ public class CalculateGiniSeriesController {
 
 		// identify invalid values when microservices were not created yet and
 		// their metric values are zero.
-		removeInvalidMetricValues(adsSeriesData, aisSeriesData);
+		removeInvalidMetricValues(adsSeriesData, aisSeriesData, adsFilteredSeriesData, aisFilteredSeriesData);
 
 		GiniSeries adsGiniSeries = calculateGiniIndexBetweenMicroservices(adsSeriesData, MetricType.ADS);
 		GiniSeries aisGiniSeries = calculateGiniIndexBetweenMicroservices(aisSeriesData, MetricType.AIS);
+		GiniSeries adsFilteredGiniSeries = calculateGiniIndexBetweenMicroservices(adsFilteredSeriesData,
+				MetricType.ADS_FILTERED);
+		GiniSeries aisFilteredGiniSeries = calculateGiniIndexBetweenMicroservices(aisFilteredSeriesData,
+				MetricType.AIS_FILTERED);
 
 		msApp.addGiniSeries(adsGiniSeries);
 		msApp.addGiniSeries(aisGiniSeries);
+		msApp.addGiniSeries(adsFilteredGiniSeries);
+		msApp.addGiniSeries(aisFilteredGiniSeries);
 
 		if (siyMetricValues != null && siyMetricValues.length > 0) {
 			GiniSeries siyGiniSeries = calculateGiniIndexBetweenMicroservices(siySeriesData, MetricType.SIY);
@@ -175,7 +211,8 @@ public class CalculateGiniSeriesController {
 	 * @param adsSeriesData
 	 * @param aisSeriesData
 	 */
-	private void removeInvalidMetricValues(List<List> adsSeriesData, List<List> aisSeriesData) {
+	private void removeInvalidMetricValues(List<List> adsSeriesData, List<List> aisSeriesData,
+			List<List> adsFilteredSeriesData, List<List> aisFilteredSeriesData) {
 		int releasesListSize = adsSeriesData.size();
 		for (int i = 0; i < releasesListSize; i++) {
 			List adsValuesList = adsSeriesData.get(i);
@@ -190,6 +227,8 @@ public class CalculateGiniSeriesController {
 			for (Integer index : indexesToRemove) {
 				adsSeriesData.get(i).remove(index.intValue());
 				aisSeriesData.get(i).remove(index.intValue());
+				// adsFilteredSeriesData.get(i).remove(index.intValue());
+				// aisFilteredSeriesData.get(i).remove(index.intValue());
 			}
 		}
 
@@ -207,12 +246,15 @@ public class CalculateGiniSeriesController {
 
 		int i = 0;
 		for (List list : seriesData) {
-			String valuesCommaSeparated = Arrays.toString(list.toArray()).replaceAll("\\[|\\]|", "");
-			GiniCoefficientResult giniResult = restTemplate
-					.getForObject(this.calculateGiniIndexURL + valuesCommaSeparated, GiniCoefficientResult.class);
-			giniHash.put(i, giniResult.getGiniIndex());
+			if (list != null && !list.isEmpty()) {
+				String valuesCommaSeparated = Arrays.toString(list.toArray()).replaceAll("\\[|\\]|", "");
+				System.out.println("api parameter = " + valuesCommaSeparated);
+				GiniCoefficientResult giniResult = restTemplate
+						.getForObject(this.calculateGiniIndexURL + valuesCommaSeparated, GiniCoefficientResult.class);
+				giniHash.put(i, giniResult.getGiniIndex());
 
-			i += 1;
+				i += 1;
+			}
 		}
 		return giniSeries;
 	}
@@ -249,6 +291,8 @@ public class CalculateGiniSeriesController {
 
 		Object[] adsMetricValues = getMetricValues(microservice, MetricType.ADS);
 		Object[] aisMetricValues = getMetricValues(microservice, MetricType.AIS);
+		Object[] adsFilteredMetricValues = getMetricValues(microservice, MetricType.ADS_FILTERED);
+		Object[] aisFilteredMetricValues = getMetricValues(microservice, MetricType.AIS_FILTERED);
 
 		// get the index that represents the release of creation for the microservice.
 		// some microservices are included during the evolution and the 0s values
@@ -269,22 +313,43 @@ public class CalculateGiniSeriesController {
 		aisGiniSeries.setMetricType(MetricType.AIS);
 		HashMap<Integer, BigDecimal> aisGiniHash = new HashMap<Integer, BigDecimal>();
 
+		GiniSeries<MetricType, Integer, BigDecimal> adsFilteredGiniSeries = new GiniSeries<MetricType, Integer, BigDecimal>();
+		adsFilteredGiniSeries.setMetricType(MetricType.ADS_FILTERED);
+		HashMap<Integer, BigDecimal> adsFilteredGiniHash = new HashMap<Integer, BigDecimal>();
+
+		GiniSeries<MetricType, Integer, BigDecimal> aisFilteredGiniSeries = new GiniSeries<MetricType, Integer, BigDecimal>();
+		aisFilteredGiniSeries.setMetricType(MetricType.AIS_FILTERED);
+		HashMap<Integer, BigDecimal> aisFilteredGiniHash = new HashMap<Integer, BigDecimal>();
+
 		for (int i = 0; i < originalSize; i++) {
 			if (i >= startIndex) {
 				Object[] adsMetricValuesRange = Arrays.copyOfRange(adsMetricValues, startIndex, i + 1);
-				String adsValuesRange = Arrays.toString(adsMetricValuesRange).replaceAll("\\[|\\]|", "");
-				GiniCoefficientResult adsGiniResult = restTemplate
-						.getForObject(this.calculateGiniIndexURL + adsValuesRange, GiniCoefficientResult.class);
-				adsGiniHash.put(i, adsGiniResult.getGiniIndex());
+				adsGiniHash.put(i, calculateGiniIndex(adsMetricValuesRange));
 
 				Object[] aisMetricValuesRange = Arrays.copyOfRange(aisMetricValues, startIndex, i + 1);
-				String aisValuesRange = Arrays.toString(aisMetricValuesRange).replaceAll("\\[|\\]|", "");
-				GiniCoefficientResult aisGiniResult = restTemplate
-						.getForObject(this.calculateGiniIndexURL + aisValuesRange, GiniCoefficientResult.class);
-				aisGiniHash.put(i, aisGiniResult.getGiniIndex());
+				aisGiniHash.put(i, calculateGiniIndex(aisMetricValuesRange));
+
+				if (adsFilteredMetricValues != null && adsFilteredMetricValues.length > 0) {
+					Object[] adsFilteredMetricValuesRange = Arrays.copyOfRange(adsFilteredMetricValues, startIndex,
+							i + 1);
+					adsFilteredGiniHash.put(i, calculateGiniIndex(adsFilteredMetricValuesRange));
+				} else {
+					adsFilteredGiniHash.put(i, null);
+				}
+
+				if (aisFilteredMetricValues != null && aisFilteredMetricValues.length > 0) {
+					Object[] aisFilteredMetricValuesRange = Arrays.copyOfRange(aisFilteredMetricValues, startIndex,
+							i + 1);
+					aisFilteredGiniHash.put(i, calculateGiniIndex(aisFilteredMetricValuesRange));
+				} else {
+					aisFilteredGiniHash.put(i, null);
+				}
+
 			} else {
 				adsGiniHash.put(i, null);
 				aisGiniHash.put(i, null);
+				adsFilteredGiniHash.put(i, null);
+				aisFilteredGiniHash.put(i, null);
 			}
 
 		}
@@ -293,6 +358,28 @@ public class CalculateGiniSeriesController {
 
 		aisGiniSeries.setSeriesData(aisGiniHash);
 		microservice.addGiniSeries(aisGiniSeries);
+
+		adsFilteredGiniSeries.setSeriesData(adsFilteredGiniHash);
+		microservice.addGiniSeries(adsFilteredGiniSeries);
+
+		aisFilteredGiniSeries.setSeriesData(aisFilteredGiniHash);
+		microservice.addGiniSeries(aisFilteredGiniSeries);
+
+	}
+
+	private BigDecimal calculateGiniIndex(Object[] metricValuesRange) {
+		String valuesRange = Arrays.toString(metricValuesRange).replaceAll("\\[|\\]|", "");
+		BigDecimal giniResultCache = getGiniIndexCache().get(valuesRange);
+		// if not foun in cache, to calculate by API
+		if (giniResultCache == null) {
+			GiniCoefficientResult giniResult = restTemplate.getForObject(this.calculateGiniIndexURL + valuesRange,
+					GiniCoefficientResult.class);
+			giniResultCache = giniResult.getGiniIndex();
+			getGiniIndexCache().put(valuesRange, giniResultCache);
+		} else {
+			System.out.println("Result found in cache!");
+		}
+		return giniResultCache;
 
 	}
 
@@ -353,5 +440,22 @@ public class CalculateGiniSeriesController {
 			}
 		}
 		return mcsAppList;
+	}
+
+	/**
+	 * @return the giniIndexCache
+	 */
+	public HashMap<String, BigDecimal> getGiniIndexCache() {
+		if (this.giniIndexCache == null) {
+			this.giniIndexCache = new HashMap<String, BigDecimal>();
+		}
+		return giniIndexCache;
+	}
+
+	/**
+	 * @param giniIndexCache the giniIndexCache to set
+	 */
+	public void setGiniIndexCache(HashMap<String, BigDecimal> giniIndexCache) {
+		this.giniIndexCache = giniIndexCache;
 	}
 }
